@@ -4,51 +4,57 @@ const db = require('../../db/connection');
 
 // Get all parties
 router.get('/parties', (req, res) => {
-  // internal logic remains the same
+  const sql = `SELECT * FROM parties`;
+
+  db.query(sql, (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({
+      message: 'success',
+      data: rows
+    });
+  });
 });
 
 // Get single party
-router.get('/party/:id', (req, res) => {});
+router.get('/party/:id', (req, res) => {
+  const sql = `SELECT * FROM parties WHERE id = ?`;
+  const params = [req.params.id];
+
+  db.query(sql, params, (err, row) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json({
+      message: 'success',
+      data: row
+    });
+  });
+});
 
 // Delete a party
-router.delete('/party/:id', (req, res) => {});
+router.delete('/party/:id', (req, res) => {
+  const sql = `DELETE FROM parties WHERE id = ?`;
+  const params = [req.params.id];
 
-// Get single voter
-router.get('/voter/:id', (req, res) => {
-    const sql = `SELECT * FROM voters WHERE id = ?`;
-    const params = [req.params.id];
-  
-    db.query(sql, params, (err, row) => {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      res.status(400).json({ error: res.message });
+    } else if (!result.affectedRows) {
       res.json({
-        message: 'success',
-        data: row
+        message: 'Party not found'
       });
-    });
-  });
-
-  router.post('/voter', ({ body }, res) => {
-    const sql = `INSERT INTO voters (first_name, last_name, email) VALUES (?,?,?)`;
-    const params = [body.first_name, body.last_name, body.email];
-  // Data validation
-const errors = inputCheck(body, 'first_name', 'last_name', 'email');
-if (errors) {
-  res.status(400).json({ error: errors });
-  return;
-}
-    db.query(sql, params, (err, result) => {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
+    } else {
       res.json({
-        message: 'success',
-        data: body
+        message: 'deleted',
+        changes: result.affectedRows,
+        id: req.params.id
       });
-    });
+    }
   });
+});
 
 module.exports = router;
